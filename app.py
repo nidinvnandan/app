@@ -10,7 +10,7 @@ import pickle
 from sklearn.datasets import load_iris
 try:
     modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
-except Execution as e:
+except Exception as e:
     st.error('f" error loading: {e}')
              
 irismodel=tf.keras.models.load_model('iris_model.h5')
