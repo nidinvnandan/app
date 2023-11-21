@@ -1,4 +1,3 @@
-from main import rnn_predict
 import streamlit as st
 from PIL import Image
 import numpy as np
@@ -8,17 +7,28 @@ from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence 
 import pickle
 from sklearn.datasets import load_iris
+
+#loading models for different tasks
 try:
     modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
 except Exception as e:
     st.error('f" error loading: {e}')
-             
 irismodel=tf.keras.models.load_model('iris_model.h5')
 lstmmodel = tf.keras.models.load_model('lstm_imdb_model.h5')
 digitmodel=tf.keras.models.load_model('digit.h5')
+rnnmodel=tf.keras.models.load_model('model_kerasrnn.h5')
+with open('tokeniser.pkl', 'rb') as file:
+    loaded_tokeniser = pickle.load(file)
+with open('backprop_model.pkl', 'rb') as file:
+    BP_model = pickle.load(file)
+with open('perceptron_model.pkl','rb') as file:
+     p_model=pickle.load(file)
+
 iris=load_iris()
 class_names = iris.target_names
 
+#defining functions for the prediction
+#make function for cnn tumor prediction
 def make(img):
     img = Image.open(img)
     img = img.resize((128, 128))
@@ -30,9 +40,9 @@ def make(img):
     else:
         return "No Tumor"
     
-
+#function for DNN prediction 
 def predict_iris_with_saved_model(user_input):
-    # Load the model (replace irismodel with your loaded model)
+    
     
 
     # Convert user input to float values
@@ -46,7 +56,7 @@ def predict_iris_with_saved_model(user_input):
 
     st.write(f'Predicted class: {name}')
 
-            
+#function to predcit movie review using LSTM model          
 def predict_sentiment(review):
     # Process input text similarly to training data
     top_words = 5000
@@ -60,10 +70,11 @@ def predict_sentiment(review):
         return "Positive"
     else:
         return "Negative"
+    
+
 def preprocess_user_image(image):
     # Open the image using PIL
     img = Image.open(image)
-    # Convert the image to grayscale if necessary
     img = img.convert('L')  # Convert to grayscale
 
     # Resize the image to match MNIST dataset's input shape (28x28 pixels)
@@ -76,6 +87,7 @@ def preprocess_user_image(image):
 
     return img_array
 
+#function to predciting the digit using cnn
 def predict_digit(image):
     # Preprocess the image (reshape if necessary, normalize, etc.)
     # Make predictions using the loaded model
@@ -84,11 +96,21 @@ def predict_digit(image):
     predicted_label = argmax(prediction, axis=1)
     return predicted_label[0]
 
-with open('backprop_model.pkl', 'rb') as file:
-    BP_model = pickle.load(file)
-with open('perceptron_model.pkl','rb') as file:
-     p_model=pickle.load(file)
-st.title('App')
+
+#fuction to predcit spam message using RNN
+def rnn_predict(input_text):
+    # Process input text similarly to training data
+    #here the loaded_tokeniser is a function which is defined already
+    encoded_input = loaded_tokeniser.texts_to_sequences([input_text])
+    padded_input = tf.keras.preprocessing.sequence.pad_sequences(encoded_input, maxlen=10, padding='post')
+    prediction = rnnmodel.predict(padded_input)
+    if prediction > 0.5:
+        return "spam"
+    else:
+        return "ham"
+
+#building the main app
+st.title('App for Classification Task')
 
 option = st.selectbox(
     'Select a classification task',
