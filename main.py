@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 
 
 
-dataset = pd.read_csv('C:/Users/Admin/Documents/SMSSpamCollection',sep='\t',names=['label','message'])
+dataset = pd.read_csv('SMSSpamCollection',sep='\t',names=['label','message'])
 
 dataset['label'] = dataset['label'].map( {'spam': 1, 'ham': 0} )
 X = dataset['message'].values
