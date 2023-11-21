@@ -8,8 +8,11 @@ from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence 
 import pickle
 from sklearn.datasets import load_iris
-
-modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
+try:
+    modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
+except Execution as e:
+    st.error('f"error loading: {e}")
+             
 irismodel=tf.keras.models.load_model('iris_model.h5')
 lstmmodel = tf.keras.models.load_model('lstm_imdb_model.h5')
 digitmodel=tf.keras.models.load_model('digit.h5')
