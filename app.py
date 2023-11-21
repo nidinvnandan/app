@@ -12,7 +12,7 @@ from sklearn.datasets import load_iris
 try:
     modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
 except Exception as e:
-    st.error('f" error loading: {e}')
+    st.error(f" error loading: {e}")
 irismodel=tf.keras.models.load_model('iris_model.h5')
 lstmmodel = tf.keras.models.load_model('lstm_imdb_model.h5')
 digitmodel=tf.keras.models.load_model('digit.h5')
