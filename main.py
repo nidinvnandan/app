@@ -1,5 +1,4 @@
 import pandas as pd
-import seaborn as sns
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
