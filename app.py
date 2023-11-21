@@ -11,9 +11,9 @@ import os
 
 #loading models for different tasks
 import subprocess
-if not os.path.isfile('model.h5'):
-    subprocess.run(['curl', '--output', 'model.h5', 'https://github.com/nidinvnandan/app/blob/main/cnnmodel.h5'], shell=True)
-modelcnn1 = tf.keras.models.load_model('model.h5', compile=False)
+if not os.path.isfile('modell.h5'):
+    subprocess.run(['curl --output modell.h5 "https://github.com/nidinvnandan/app/blob/main/cnnmodel.h5"'], shell=True)
+modelcnn1 = tf.keras.models.load_model('modell.h5', compile=False)
 irismodel=tf.keras.models.load_model('iris_model.h5')
 lstmmodel = tf.keras.models.load_model('lstm_imdb_model.h5')
 digitmodel=tf.keras.models.load_model('digit.h5')
