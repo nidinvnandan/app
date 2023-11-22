@@ -5,25 +5,28 @@ from numpy import argmax
 import tensorflow as tf
 from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence 
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 import pickle
 from sklearn.datasets import load_iris
-import os
 
 #loading models for different tasks
 try:
     modelcnn1 = tf.keras.models.load_model('cnnmodel.h5')
 except Exception as e:
-    st.error(f" error loading: {e}")
-irismodel=tf.keras.models.load_model('iris_model.h5')
+    st.error(f" error loading CNN Model: {e}")
+dnnmoviemodel=tf.keras.models.load_model('dnn_movie.h5')
 lstmmodel = tf.keras.models.load_model('lstm_imdb_model.h5')
 digitmodel=tf.keras.models.load_model('digit.h5')
 rnnmodel=tf.keras.models.load_model('model_kerasrnn.h5')
 with open('tokeniser.pkl', 'rb') as file:
     loaded_tokeniser = pickle.load(file)
-with open('backprop_model.pkl', 'rb') as file:
-    BP_model = pickle.load(file)
-with open('perceptron_model.pkl','rb') as file:
-     p_model=pickle.load(file)
+with open('backpropagationmovie_model.pkl','rb') as file:
+     BP_model=pickle.load(file)  
+with open('perceptronmovie_model.pkl','rb') as file:
+     pm_model=pickle.load(file)
+with open('dnntokeniser.pkl','rb') as file:
+     dtokenizer=pickle.load(file)   
 
 iris=load_iris()
 class_names = iris.target_names
@@ -42,20 +45,15 @@ def make(img):
         return "No Tumor"
     
 #function for DNN prediction 
-def predict_iris_with_saved_model(user_input):
-    
-    
+def predict_dnnsentiment(text):
+    sequence = dtokenizer.texts_to_sequences([text])
+    padded_sequence = pad_sequences(sequence, maxlen=200)
+    prediction = dnnmoviemodel.predict(padded_sequence)[0][0]
+    if prediction >= 0.5:
+        return "Positive"
+    else:
+        return "Negative"
 
-    # Convert user input to float values
-    user_input = [float(val) for val in user_input]
-
-    # Predict using the loaded model
-    prediction = irismodel.predict(np.array([user_input]))
-    predicted_class = np.argmax(prediction)
-
-    name = class_names[predicted_class]
-
-    st.write(f'Predicted class: {name}')
 
 #function to predcit movie review using LSTM model          
 def predict_sentiment(review):
@@ -110,6 +108,16 @@ def rnn_predict(input_text):
     else:
         return "ham"
 
+
+#preprocess function for perceptron
+def preprocess_input(user_input, num_words=1000, max_len=200):
+    word_index = imdb.get_word_index()
+    input_sequence = [word_index[word] if word in word_index and word_index[word] < num_words else 0 for word in user_input.split()]
+    padded_sequence = sequence.pad_sequences([input_sequence], maxlen=max_len)
+    return padded_sequence
+
+
+
 #building the main app
 st.title('App for Classification Task')
 
@@ -144,17 +152,16 @@ elif option == 'Sentiment Classification':
             else:
                 st.write("Please enter some text for prediction")
     elif sentiment_model == 'DNN':  # New block for DNN option
-            st.header('DNN Iris Classification')
-            st.subheader('Iris classification using DNN model')
-            # Input fields for separate numerical values
-            sepal_length = st.number_input("Enter Sepal Length:")
-            sepal_width = st.number_input("Enter Sepal Width:")
-            petal_length = st.number_input("Enter Petal Length:")
-            petal_width = st.number_input("Enter Petal Width:")
+            st.header('DNN Movie Sentiment Classification')
+            
+            user_review = st.text_area("Enter your movie review here:", "")
 
             if st.button('Predict'):
-                user_input = [sepal_length, sepal_width, petal_length, petal_width]
-                predict_iris_with_saved_model(user_input)
+                if user_review:
+                    prediction_result = predict_dnnsentiment(user_review)
+                    st.write(f"The review is classified as: {prediction_result}")
+                else:
+                    st.write("Please enter a movie review for prediction")
     elif sentiment_model== 'LSTM':
             st.header('LSTM review Classification')
             st.subheader('review classification using LSTM model')
@@ -166,25 +173,30 @@ elif option == 'Sentiment Classification':
                 else:
                     st.write("Please enter a movie review for prediction")
     elif sentiment_model=='BackPropagation':
-            st.header('Iris Classification ')
-            st.subheader('Iris classification using Backpropagation model')
-            sepal_length = st.number_input("Enter Sepal Length:")
-            sepal_width = st.number_input("Enter Sepal Width:")
+            st.header('Movie Review Classification ')
+            st.subheader('Movie Review Classification using Backpropagation model')
+            user_input = st.text_area("Enter your review ")
+
             if st.button('Predict'):
-                user_input = np.array([[sepal_length, sepal_width]])
-                user_prediction = BP_model.predict(user_input)[0]
-                predicted_class_name = class_names[user_prediction]
-                st.write(f"Predicted class for user input: {predicted_class_name}")
+                words = user_input.split()
+                word_index = imdb.get_word_index()
+                review = [word_index[word] if word in word_index and word_index[word] < 10000 else 0 for word in words]
+                review = pad_sequences([review], maxlen=200)
+                
+                prediction = BP_model.predict(review)
+                sentiment = "Positive" if prediction[0] == 1 else "Negative"
+                
+                st.write(f"Predicted Sentiment: {sentiment}")
     elif sentiment_model=='Perceptron':
-            st.header('Iris Classification ')
-            st.subheader('Iris classification using Perceptron model')
-            sepal_length = st.number_input("Enter Sepal Length:")
-            sepal_width = st.number_input("Enter Sepal Width:")
+            st.header('Movie Review Classification ')
+            st.subheader('Movie Review Classification using Perceptron model')
+            user_input = st.text_area("Enter your review ")
+
             if st.button('Predict'):
-                user_input = np.array([[sepal_length, sepal_width]])
-                user_prediction = p_model.predict(user_input)[0]
-                predicted_class_name = class_names[user_prediction]
-                st.write(f"Predicted class for user input: {predicted_class_name}")
+                processed_input = preprocess_input(user_input)
+                prediction = pm_model.predict(processed_input)[0]
+                sentiment = "Positive" if prediction == 1 else "Negative"
+                st.write(f"Predicted Sentiment: {sentiment}")
 
 elif option == 'Image Classification':  # Updated for Image Classification option
     st.header('Image Classification')
